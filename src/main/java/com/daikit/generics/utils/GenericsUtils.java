@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 /**
- * Utility methods for retrieving actual implementing generic types from generic class & fields
+ * Utility methods for retrieving actual implementing generic types from generic class and fields
  *
  * @author tcaselli
  */
@@ -142,6 +142,7 @@ public class GenericsUtils
 	 * Get direct generic types for given class
 	 *
 	 * @param clazz the clazz
+	 * @param       <T> The input class actual type
 	 * @return a list of the raw classes for the actual type arguments.
 	 */
 	public static <T> List<Type> getTypeArguments(final Class<T> clazz)
@@ -188,7 +189,7 @@ public class GenericsUtils
 	/**
 	 * Get the underlying classes for a list of types, (if type is a variable type then its class will be null).
 	 *
-	 * @param type the type list
+	 * @param types the type list
 	 * @return the underlying class
 	 */
 	public static List<Class<?>> getRawClasses(final List<Type> types)
@@ -283,14 +284,14 @@ public class GenericsUtils
 	/**
 	 * This is a helper method to call a method on an Object with the given parameters.
 	 *
-	 * @param object
-	 * @param methodName
-	 * @param args
+	 * @param object     the object holding the method and on which the method must be called
+	 * @param methodName the method name
+	 * @param args       arguments for the method
 	 * @return an Object
-	 * @throws NoSuchMethodException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
+	 * @throws NoSuchMethodException     if there is no such method in object
+	 * @throws IllegalArgumentException  if arguments for the method are not correct
+	 * @throws IllegalAccessException    if the method is not accessible
+	 * @throws InvocationTargetException if an error happened during method call
 	 */
 	public static Object callMethod(final Object object, final String methodName, final Object... args)
 			throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException
@@ -311,20 +312,20 @@ public class GenericsUtils
 	/**
 	 * This is a helper method to call a method on an Object with the given parameters.
 	 *
-	 * @param object
-	 * @param methodName
-	 * @param paramTypes
-	 * @param args
+	 * @param object     the object holding the method and on which the method must be called
+	 * @param methodName the method name
+	 * @param argsTypes  types for method arguments
+	 * @param args       arguments for the method
 	 * @return an Object
-	 * @throws NoSuchMethodException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
+	 * @throws NoSuchMethodException     if there is no such method in object
+	 * @throws IllegalArgumentException  if arguments for the method are not correct
+	 * @throws IllegalAccessException    if the method is not accessible
+	 * @throws InvocationTargetException if an error happened during method call
 	 */
-	public static Object callMethod(final Object object, final String methodName, final Class<?>[] paramTypes, final Object... args)
+	public static Object callMethod(final Object object, final String methodName, final Class<?>[] argsTypes, final Object... args)
 			throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException
 	{
-		final Method method = getMethod(object.getClass(), methodName, paramTypes);
+		final Method method = getMethod(object.getClass(), methodName, argsTypes);
 		if (method == null)
 		{
 			throw new NoSuchMethodException("Method: " + methodName + " not found on Class: " + object.getClass());
@@ -365,12 +366,14 @@ public class GenericsUtils
 	}
 
 	/**
-	 * @param clazz
-	 * @param methodName
-	 * @param paramTypes
+	 * Get a method on a class with given name and parameters.
+	 *
+	 * @param clazz      the class holding the method
+	 * @param methodName the method name
+	 * @param argsTypes  types for method arguments
 	 * @return a {@link Method}
 	 */
-	public static Method getMethod(final Class<?> clazz, final String methodName, final Class<?>... paramTypes)
+	public static Method getMethod(final Class<?> clazz, final String methodName, final Class<?>... argsTypes)
 	{
 		final List<Method> candidates = new ArrayList<>();
 
@@ -383,34 +386,34 @@ public class GenericsUtils
 				if (method.getName().equals(methodName))
 				{
 					final Class<?>[] methodParamTypes = method.getParameterTypes();
-					if (paramTypes.length == methodParamTypes.length || method.isVarArgs() && paramTypes.length >= methodParamTypes.length - 1)
+					if (argsTypes.length == methodParamTypes.length || method.isVarArgs() && argsTypes.length >= methodParamTypes.length - 1)
 					{
 						// method has correct name and # of parameters
 						if (method.isVarArgs())
 						{
 							for (int i = 0; i < methodParamTypes.length - 1; i++)
 							{
-								if (paramTypes[i] != null && !methodParamTypes[i].isAssignableFrom(paramTypes[i]))
+								if (argsTypes[i] != null && !methodParamTypes[i].isAssignableFrom(argsTypes[i]))
 								{
 									continue outer;
 								}
 							}
-							if (methodParamTypes.length == paramTypes.length + 1)
+							if (methodParamTypes.length == argsTypes.length + 1)
 							{
 								// no param is specified for the optional vararg
 								// spot
 							}
-							else if (methodParamTypes.length == paramTypes.length
-									&& methodParamTypes[paramTypes.length - 1].isAssignableFrom(paramTypes[paramTypes.length - 1]))
+							else if (methodParamTypes.length == argsTypes.length
+									&& methodParamTypes[argsTypes.length - 1].isAssignableFrom(argsTypes[argsTypes.length - 1]))
 							{
 								// an array is specified for the last param
 							}
 							else
 							{
 								final Class<?> varClass = methodParamTypes[methodParamTypes.length - 1].getComponentType();
-								for (int i = methodParamTypes.length - 1; i < paramTypes.length; i++)
+								for (int i = methodParamTypes.length - 1; i < argsTypes.length; i++)
 								{
-									if (paramTypes[i] != null && !varClass.isAssignableFrom(paramTypes[i]))
+									if (argsTypes[i] != null && !varClass.isAssignableFrom(argsTypes[i]))
 									{
 										continue outer;
 									}
@@ -421,7 +424,7 @@ public class GenericsUtils
 						{
 							for (int i = 0; i < methodParamTypes.length; i++)
 							{
-								if (paramTypes[i] != null && !methodParamTypes[i].isAssignableFrom(paramTypes[i]))
+								if (argsTypes[i] != null && !methodParamTypes[i].isAssignableFrom(argsTypes[i]))
 								{
 									continue outer;
 								}
@@ -461,8 +464,8 @@ public class GenericsUtils
 				{
 					// the exception is if an array is actually specified as the
 					// last parameter
-					if (m.getParameterTypes().length != paramTypes.length
-							|| !m.getParameterTypes()[paramTypes.length - 1].isAssignableFrom(paramTypes[paramTypes.length - 1]))
+					if (m.getParameterTypes().length != argsTypes.length
+							|| !m.getParameterTypes()[argsTypes.length - 1].isAssignableFrom(argsTypes[argsTypes.length - 1]))
 					{
 						itr.remove();
 					}
@@ -497,8 +500,8 @@ public class GenericsUtils
 				{
 					if (aTypes[i] != null)
 					{
-						final int distA = getDistance(aTypes[i], paramTypes[i]);
-						final int distB = getDistance(bTypes[i], paramTypes[i]);
+						final int distA = getDistance(aTypes[i], argsTypes[i]);
+						final int distB = getDistance(bTypes[i], argsTypes[i]);
 						if (distA > distB)
 						{
 							bScore++;

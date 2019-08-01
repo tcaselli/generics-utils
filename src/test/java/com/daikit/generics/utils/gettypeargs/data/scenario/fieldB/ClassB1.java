@@ -5,8 +5,7 @@ import java.util.List;
 import com.daikit.generics.utils.gettypeargs.data.Type3;
 
 @SuppressWarnings("unused")
-public class ClassB1<GENERIC1, GENERIC2>
-{
+public class ClassB1<GENERIC1, GENERIC2> {
 
 	private List<GENERIC1> test1;
 

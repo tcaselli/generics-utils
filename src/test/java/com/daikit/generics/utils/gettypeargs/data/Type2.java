@@ -1,6 +1,5 @@
 package com.daikit.generics.utils.gettypeargs.data;
 
-public class Type2
-{
+public class Type2 {
 
 }

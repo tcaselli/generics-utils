@@ -6,8 +6,7 @@ import com.daikit.generics.utils.gettypeargs.data.Type1;
 import com.daikit.generics.utils.gettypeargs.data.Type2;
 
 @SuppressWarnings("unused")
-public class ClassA1
-{
+public class ClassA1 {
 
 	private List<Type1> test1;
 

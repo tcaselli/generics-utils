@@ -6,7 +6,7 @@
 
 Generics utils consists in a unique utility class for dealing with java generics. Here are its capabilities :
 
-1) Get actual Types a class has used to implement a given interface
+### Get actual Types a class has used to implement a given interface
 
 Example, super simple but it works with any hierarchy of classes provided that ClassA1 implements InterfaceA1 somehow :
 ```java
@@ -19,7 +19,7 @@ GenericsUtils.getTypeArguments(ClassA1.class, InterfaceA1.class)
 // Will return List[Type1.class, Type2.class]
 ```
 
-2) Get actual Types a class has used to extend a given super class
+### Get actual Types a class has used to extend a given super class
 
 Example, super simple but it works with any hierarchy of classes provided that ClassA1 extends ClassA2 somehow :
 ```java
@@ -28,10 +28,11 @@ public class Type2 {}
 public class ClassA1<GENERIC1, GENERIC2> {}
 public class ClassA2 extends ClassA1<Type1, Type2> {}
 
-GenericsUtils.getTypeArguments(ClassA1.class, ClassA2.class) // Will return List[Type1.class, Type2.class]
+GenericsUtils.getTypeArguments(ClassA1.class, ClassA2.class) 
+// Will return List[Type1.class, Type2.class]
 ```
 
-3) Get actual generic Types for a class generic field
+### Get actual generic Types for a class generic field
 
 Example :
 
@@ -42,27 +43,30 @@ public class ClassA1 { private ClassA3<Type1, Type2> test; }
 public class ClassA2 extends ClassA1 {}
 public class ClassA3<GENERIC1, GENERIC2> {}
 
-GenericsUtils.getFieldTypeArguments(ClassA2.class, ClassA1.class.getDeclaredField("test")) // Will return List[Type1.class, Type2.class]
+GenericsUtils.getFieldTypeArguments(ClassA2.class, ClassA1.class.getDeclaredField("test")) 
+// Will return List[Type1.class, Type2.class]
 ```
 
-4) Get a method on a given object providing its name and argument types
+### Get a method on a given object providing its name and argument types
 
 Example, super simple but it works with any kind of hierrarchy, with varargs and overriding :
 
 ```java
 public class Class1 { public void test(String param1, String... param2) }
 
-GenericsUtils.getMethod(Class1.class, "test", String.class, String[].class) // Will return the method "test"
+GenericsUtils.getMethod(Class1.class, "test", String.class, String[].class) 
+// Will return the method "test"
 ```
 
-5) Call a method on a given object providing its name and argument types
+### Call a method on a given object providing its name and argument types
 
 Example :
 
 ```java
 public class Class1 { public void test(String param1, String... param2) }
 
-GenericsUtils.callMethod(object, "test", "param", new String[] { "vararg1", "vararg2" }) // Will call the test method with arguments ("param", "vararg1", "vararg2")
+GenericsUtils.callMethod(object, "test", "param", new String[] { "vararg1", "vararg2" }) 
+// Will call the test method with arguments ("param", "vararg1", "vararg2")
 ```
 
 ## Where can I get the latest release?

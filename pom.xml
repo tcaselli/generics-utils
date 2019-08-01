@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
 
-	<name>${project:groupId}:${project.artifactId}</name>
+	<name>com.daikit:generics-utils</name>
 	<description>Utility methods for manipulating java generics</description>
 	<inceptionYear>2019</inceptionYear>
 	<url>https://www.daikit.com</url>

@@ -69,9 +69,20 @@ GenericsUtils.callMethod(object, "test", "param", new String[] { "vararg1", "var
 // Will call the test method with arguments ("param", "vararg1", "vararg2")
 ```
 
+### Get type(s) underlying class(es)
+
+Example :
+
+```java
+public class Class1<GENERIC> {}
+public class Class2 extends Class1<Type1> {}
+GenericsUtils.getTypeClass(Class2.class.getGenericSuperclass())
+// Will return Class1
+```
+
 ## Where can I get the latest release?
 
-You can pull it from the [central Maven repositories](https://mvnrepository.com/artifact/com.daikit/generics-utils):
+You can check latest version and pull it from the [central Maven repositories](https://mvnrepository.com/artifact/com.daikit/generics-utils):
 
 With maven
 
@@ -79,14 +90,14 @@ With maven
 <dependency>
     <groupId>com.daikit</groupId>
     <artifactId>generics-utils</artifactId>
-    <version>1.0</version>
+    <version>x.x</version>
 </dependency>
 ```
 
 Or with gradle 
 
 ```gradle
-compile group: 'com.daikit', name: 'generics-utils', version: '1.0'
+compile group: 'com.daikit', name: 'generics-utils', version: 'x.x'
 ```
 
 ## Contributing

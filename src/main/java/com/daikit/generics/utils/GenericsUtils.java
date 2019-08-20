@@ -55,24 +55,41 @@ public class GenericsUtils {
 				: getTypeArgumentsFromSuperclass((Class) actualType, baseType);
 	}
 
+	/**
+	 * Get type arguments of a generic base type "baseType" in the context of
+	 * extending/implementing class or interface "actualType".<br>
+	 * This is method equivalent to call {@link #getTypeClasses(List)} on
+	 * {@link #getTypeArguments(Class, Class)}.
+	 *
+	 * @param actualType
+	 *            the extending/implementing class or interface
+	 * @param baseType
+	 *            the interface or super class where are defined the generic
+	 *            types from which we are looking for actual types
+	 * @return a generic type class list of interface
+	 */
+	public static List<Class<?>> getTypeClassArguments(final Class<?> actualType, final Class<?> baseType) {
+		return getTypeClasses(getTypeArguments(actualType, baseType));
+	}
+
 	private static List<Type> getTypeArgumentsFromInterface(final Class<?> actualType, final Class<?> baseType) {
 		final Map<Type, Type> resolvedTypes = new HashMap<>();
 		Type type = actualType;
 		while (!getTypeClass(type).equals(Object.class)) {
-			final Class<?> rawType = getTypeClass(type);
+			final Class<?> typeClass = getTypeClass(type);
 
 			// Store type parameter (from class) to actual type for later
 			// mapping
 			if (type instanceof ParameterizedType) {
 				final Type[] actualClassTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
-				final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
+				final TypeVariable<?>[] typeParameters = typeClass.getTypeParameters();
 				for (int i = 0; i < actualClassTypeArguments.length; i++) {
 					resolvedTypes.put(typeParameters[i], actualClassTypeArguments[i]);
 				}
 			}
 
 			// Get generic interfaces for current type
-			final Type[] genericInterfaces = rawType.getGenericInterfaces();
+			final Type[] genericInterfaces = typeClass.getGenericInterfaces();
 			final List<Type> allSuperInterfaces = new ArrayList<>();
 			Collections.addAll(allSuperInterfaces, genericInterfaces);
 			for (final Type genericInterface : genericInterfaces) {
@@ -90,8 +107,8 @@ public class GenericsUtils {
 				if (superInterfaceType instanceof ParameterizedType) {
 					final Type[] actualClassTypeArguments = ((ParameterizedType) superInterfaceType)
 							.getActualTypeArguments();
-					final Class<?> rawInterfaceype = getTypeClass(superInterfaceType);
-					final TypeVariable<?>[] typeParameters = rawInterfaceype.getTypeParameters();
+					final Class<?> interfaceTypeClass = getTypeClass(superInterfaceType);
+					final TypeVariable<?>[] typeParameters = interfaceTypeClass.getTypeParameters();
 					for (int i = 0; i < actualClassTypeArguments.length; i++) {
 						resolvedTypes.put(typeParameters[i], actualClassTypeArguments[i]);
 					}
@@ -101,8 +118,8 @@ public class GenericsUtils {
 			// Find searched interface in interfaces for current type
 			for (final Type genericInterface : allSuperInterfaces) {
 				if (genericInterface instanceof ParameterizedType) {
-					final Class<?> rawInterfaceType = getTypeClass(genericInterface);
-					if (baseType.equals(rawInterfaceType)) {
+					final Class<?> interfaceTypeClass = getTypeClass(genericInterface);
+					if (baseType.equals(interfaceTypeClass)) {
 						// Returned list
 						final List<Type> typeArguments = new ArrayList<>();
 
@@ -121,7 +138,7 @@ public class GenericsUtils {
 					}
 				}
 			}
-			type = rawType.getGenericSuperclass();
+			type = typeClass.getGenericSuperclass();
 		}
 		return null;
 	}
@@ -131,7 +148,7 @@ public class GenericsUtils {
 		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(actualType, baseType);
 		// for each actual type argument provided to baseClass, determine (if
 		// possible)
-		// the raw class for that type argument.
+		// the type class for that type argument.
 		final Type[] genericTypes = getActualTypeArguments(resolvedTypes.type);
 		return getTypeArguments(resolvedTypes.resolvedTypes, resolvedTypes.bounds, genericTypes);
 	}
@@ -143,10 +160,25 @@ public class GenericsUtils {
 	 *            the clazz
 	 * @param <T>
 	 *            The input class actual type
-	 * @return a list of the raw classes for the actual type arguments.
+	 * @return a list of the types for the actual type arguments.
 	 */
 	public static <T> List<Type> getTypeArguments(final Class<T> clazz) {
 		return getTypeArguments(clazz, clazz);
+	}
+
+	/**
+	 * Get direct generic types for given class.<br>
+	 * This is method equivalent to call {@link #getTypeClasses(List)} on
+	 * {@link #getTypeClassArguments(Class)}.
+	 *
+	 * @param clazz
+	 *            the clazz
+	 * @param <T>
+	 *            The input class actual type
+	 * @return a list of the type classes for the actual type arguments.
+	 */
+	public static <T> List<Class<?>> getTypeClassArguments(final Class<T> clazz) {
+		return getTypeClasses(getTypeArguments(clazz));
 	}
 
 	/**
@@ -715,30 +747,31 @@ public class GenericsUtils {
 		loop : while (holder.type != null) {
 			if (holder.type instanceof Class) {
 				if (!stop) {
-					// there is no useful information for us in raw types, so
+					// there is no useful information for us in types classes,
+					// so
 					// just
 					// keep going.
 					holder.type = ((Class) holder.type).getGenericSuperclass();
 				}
 			} else {
 				final ParameterizedType parameterizedType = (ParameterizedType) holder.type;
-				final Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+				final Class<?> typeClass = (Class<?>) parameterizedType.getRawType();
 
 				final Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-				final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
+				final TypeVariable<?>[] typeParameters = typeClass.getTypeParameters();
 				for (int i = 0; i < actualTypeArguments.length; i++) {
 					holder.resolvedTypes.put(typeParameters[i], actualTypeArguments[i]);
 				}
 
-				if (!stop && !rawType.equals(baseClass)) {
-					holder.type = rawType.getGenericSuperclass();
+				if (!stop && !typeClass.equals(baseClass)) {
+					holder.type = typeClass.getGenericSuperclass();
 				}
 			}
 			if (stop) {
-				final Class<?> rawType = holder.type instanceof Class
+				final Class<?> typeClass = holder.type instanceof Class
 						? (Class<?>) holder.type
 						: (Class<?>) ((ParameterizedType) holder.type).getRawType();
-				for (final TypeVariable typeVariable : rawType.getTypeParameters()) {
+				for (final TypeVariable typeVariable : typeClass.getTypeParameters()) {
 					holder.bounds.put(typeVariable.getName(), typeVariable.getBounds()[0]);
 				}
 				break loop;

@@ -1,4 +1,4 @@
-package com.daikit.generics.utils.getrawclass.data;
+package com.daikit.generics.utils.gettypeclass.data;
 
 import com.daikit.generics.utils.gettypeargs.data.Type1;
 

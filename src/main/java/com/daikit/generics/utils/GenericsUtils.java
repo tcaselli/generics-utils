@@ -31,8 +31,7 @@ public class GenericsUtils {
 	 * Cache for {@link Class#getDeclaredMethods()}, allowing for fast
 	 * resolution.
 	 */
-	private static final Map<Class<?>, Method[]> declaredMethodsCache = new HashMap<>(
-			256);
+	private static final Map<Class<?>, Method[]> declaredMethodsCache = new HashMap<>(256);
 
 	// *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 	// METHODS
@@ -50,30 +49,25 @@ public class GenericsUtils {
 	 * @return a generic type list of interface
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static List<Type> getTypeArguments(final Class<?> actualType,
-			final Class<?> baseType) {
+	public static List<Type> getTypeArguments(final Class<?> actualType, final Class<?> baseType) {
 		return baseType.isInterface()
 				? getTypeArgumentsFromInterface(actualType, baseType)
 				: getTypeArgumentsFromSuperclass((Class) actualType, baseType);
 	}
 
-	private static List<Type> getTypeArgumentsFromInterface(
-			final Class<?> actualType, final Class<?> baseType) {
+	private static List<Type> getTypeArgumentsFromInterface(final Class<?> actualType, final Class<?> baseType) {
 		final Map<Type, Type> resolvedTypes = new HashMap<>();
 		Type type = actualType;
-		while (!getRawClass(type).equals(Object.class)) {
-			final Class<?> rawType = getRawClass(type);
+		while (!getTypeClass(type).equals(Object.class)) {
+			final Class<?> rawType = getTypeClass(type);
 
 			// Store type parameter (from class) to actual type for later
 			// mapping
 			if (type instanceof ParameterizedType) {
-				final Type[] actualClassTypeArguments = ((ParameterizedType) type)
-						.getActualTypeArguments();
-				final TypeVariable<?>[] typeParameters = rawType
-						.getTypeParameters();
+				final Type[] actualClassTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+				final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
 				for (int i = 0; i < actualClassTypeArguments.length; i++) {
-					resolvedTypes.put(typeParameters[i],
-							actualClassTypeArguments[i]);
+					resolvedTypes.put(typeParameters[i], actualClassTypeArguments[i]);
 				}
 			}
 
@@ -96,13 +90,10 @@ public class GenericsUtils {
 				if (superInterfaceType instanceof ParameterizedType) {
 					final Type[] actualClassTypeArguments = ((ParameterizedType) superInterfaceType)
 							.getActualTypeArguments();
-					final Class<?> rawInterfaceype = getRawClass(
-							superInterfaceType);
-					final TypeVariable<?>[] typeParameters = rawInterfaceype
-							.getTypeParameters();
+					final Class<?> rawInterfaceype = getTypeClass(superInterfaceType);
+					final TypeVariable<?>[] typeParameters = rawInterfaceype.getTypeParameters();
 					for (int i = 0; i < actualClassTypeArguments.length; i++) {
-						resolvedTypes.put(typeParameters[i],
-								actualClassTypeArguments[i]);
+						resolvedTypes.put(typeParameters[i], actualClassTypeArguments[i]);
 					}
 				}
 			}
@@ -110,8 +101,7 @@ public class GenericsUtils {
 			// Find searched interface in interfaces for current type
 			for (final Type genericInterface : allSuperInterfaces) {
 				if (genericInterface instanceof ParameterizedType) {
-					final Class<?> rawInterfaceType = getRawClass(
-							genericInterface);
+					final Class<?> rawInterfaceType = getTypeClass(genericInterface);
 					if (baseType.equals(rawInterfaceType)) {
 						// Returned list
 						final List<Type> typeArguments = new ArrayList<>();
@@ -121,10 +111,8 @@ public class GenericsUtils {
 
 						for (Type actualTypeArgument : actualTypeArguments) {
 							if (actualTypeArgument instanceof TypeVariable) {
-								while (resolvedTypes
-										.containsKey(actualTypeArgument)) {
-									actualTypeArgument = resolvedTypes
-											.get(actualTypeArgument);
+								while (resolvedTypes.containsKey(actualTypeArgument)) {
+									actualTypeArgument = resolvedTypes.get(actualTypeArgument);
 								}
 							}
 							typeArguments.add(actualTypeArgument);
@@ -138,16 +126,14 @@ public class GenericsUtils {
 		return null;
 	}
 
-	private static <T> List<Type> getTypeArgumentsFromSuperclass(
-			final Class<? extends T> actualType, final Class<T> baseType) {
-		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(
-				actualType, baseType);
+	private static <T> List<Type> getTypeArgumentsFromSuperclass(final Class<? extends T> actualType,
+			final Class<T> baseType) {
+		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(actualType, baseType);
 		// for each actual type argument provided to baseClass, determine (if
 		// possible)
 		// the raw class for that type argument.
 		final Type[] genericTypes = getActualTypeArguments(resolvedTypes.type);
-		return getTypeArguments(resolvedTypes.resolvedTypes,
-				resolvedTypes.bounds, genericTypes);
+		return getTypeArguments(resolvedTypes.resolvedTypes, resolvedTypes.bounds, genericTypes);
 	}
 
 	/**
@@ -172,15 +158,14 @@ public class GenericsUtils {
 	 * @return the underlying class
 	 */
 	@SuppressWarnings("rawtypes")
-	public static final Class<?> getRawClass(final Type type) {
+	public static final Class<?> getTypeClass(final Type type) {
 		if (type instanceof Class) {
 			return (Class) type;
 		} else if (type instanceof ParameterizedType) {
-			return getRawClass(((ParameterizedType) type).getRawType());
+			return getTypeClass(((ParameterizedType) type).getRawType());
 		} else if (type instanceof GenericArrayType) {
-			final Type componentType = ((GenericArrayType) type)
-					.getGenericComponentType();
-			final Class<?> componentClass = getRawClass(componentType);
+			final Type componentType = ((GenericArrayType) type).getGenericComponentType();
+			final Class<?> componentClass = getTypeClass(componentType);
 			if (componentClass != null) {
 				return Array.newInstance(componentClass, 0).getClass();
 			} else {
@@ -199,9 +184,8 @@ public class GenericsUtils {
 	 *            the type list
 	 * @return the underlying class
 	 */
-	public static List<Class<?>> getRawClasses(final List<Type> types) {
-		return types.stream().map(type -> getRawClass(type))
-				.collect(Collectors.toList());
+	public static List<Class<?>> getTypeClasses(final List<Type> types) {
+		return types.stream().map(type -> getTypeClass(type)).collect(Collectors.toList());
 	}
 
 	/**
@@ -215,15 +199,29 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return a {@link List} of the generic types of given field type
 	 */
-	public static List<Type> getFieldTypeArguments(
-			final Class<?> contextConcreteClass, final Field field) {
-		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(
-				contextConcreteClass, field.getDeclaringClass());
-		final ParameterizedType parameterizedType = (ParameterizedType) field
-				.getGenericType();
-		return getTypeArguments(resolvedTypes.resolvedTypes,
-				resolvedTypes.bounds,
+	public static List<Type> getFieldTypeArguments(final Class<?> contextConcreteClass, final Field field) {
+		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(contextConcreteClass,
+				field.getDeclaringClass());
+		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
+		return getTypeArguments(resolvedTypes.resolvedTypes, resolvedTypes.bounds,
 				parameterizedType.getActualTypeArguments());
+	}
+
+	/**
+	 * Get generic type arguments for the given field type. The field must have
+	 * a parameterized type, these parameters can be generics from class.<br>
+	 * This is method equivalent to call {@link #getTypeClasses(List)} on
+	 * {@link #getFieldTypeArguments(Class, Field)}.
+	 *
+	 * @param contextConcreteClass
+	 *            the actual concrete class holding the field. This is useful to
+	 *            retrieve generic types for super class field.
+	 * @param field
+	 *            the {@link Field}
+	 * @return a {@link List} of the generic type classes of given field type
+	 */
+	public static List<Class<?>> getFieldTypeClassArguments(final Class<?> contextConcreteClass, final Field field) {
+		return getTypeClasses(getFieldTypeArguments(contextConcreteClass, field));
 	}
 
 	/**
@@ -235,13 +233,26 @@ public class GenericsUtils {
 	 * @return a {@link List} of the generic types of given field type
 	 */
 	public static List<Type> getFieldTypeArguments(final Field field) {
-		final ParameterizedType parameterizedType = (ParameterizedType) field
-				.getGenericType();
+		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
 		final List<Type> clazzList = new ArrayList<>();
 		for (final Type type : parameterizedType.getActualTypeArguments()) {
 			clazzList.add(type);
 		}
 		return clazzList;
+	}
+
+	/**
+	 * Get generic type arguments for the given field type. The field must have
+	 * a parameterized type, these parameters must not be generic.<br>
+	 * This is method equivalent to call {@link #getTypeClasses(List)} on
+	 * {@link #getFieldTypeArguments(Class, Field)}.
+	 *
+	 * @param field
+	 *            the {@link Field}
+	 * @return a {@link List} of the generic type classes of given field type
+	 */
+	public static List<Class<?>> getFieldTypeClassArguments(final Field field) {
+		return getTypeClasses(getFieldTypeArguments(field));
 	}
 
 	/**
@@ -256,13 +267,29 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return the first generic type of given field type
 	 */
-	public static Type getFieldTypeArgument(final Class<?> contextConcreteClass,
-			final Field field) {
-		final ParameterizedType parameterizedType = (ParameterizedType) field
-				.getGenericType();
+	public static Type getFieldTypeArgument(final Class<?> contextConcreteClass, final Field field) {
+		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
 		return parameterizedType.getActualTypeArguments().length == 0
 				? null
 				: getFieldTypeArguments(contextConcreteClass, field).get(0);
+	}
+
+	/**
+	 * Get first generic type argument for given field type. The field must have
+	 * a parameterized type with only 1 parameter, this parameter can be
+	 * generics from class.<br>
+	 * This is method equivalent to call {@link #getTypeClass(Type)} on
+	 * {@link #getFieldTypeArgument(Class, Field)}
+	 *
+	 * @param contextConcreteClass
+	 *            the actual concrete class holding the field. This is useful to
+	 *            retrieve generic types for super class field.
+	 * @param field
+	 *            the {@link Field}
+	 * @return the first generic type class of given field type
+	 */
+	public static Class<?> getFieldTypeClassArgument(final Class<?> contextConcreteClass, final Field field) {
+		return getTypeClass(getFieldTypeArgument(contextConcreteClass, field));
 	}
 
 	/**
@@ -274,12 +301,26 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return the first generic type of given field type
 	 */
-	public static Class<?> getFieldTypeArgument(final Field field) {
-		final ParameterizedType parameterizedType = (ParameterizedType) field
-				.getGenericType();
+	public static Type getFieldTypeArgument(final Field field) {
+		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
 		return parameterizedType.getActualTypeArguments().length == 0
 				? null
-				: getRawClass(parameterizedType.getActualTypeArguments()[0]);
+				: parameterizedType.getActualTypeArguments()[0];
+	}
+
+	/**
+	 * Get first generic type argument for given field type. The field must have
+	 * a parameterized type with only 1 parameter, this parameter cant be
+	 * generics from class.<br>
+	 * This is method equivalent to call {@link #getTypeClass(Type)} on
+	 * {@link #getFieldTypeArgument(Field)}
+	 *
+	 * @param field
+	 *            the {@link Field}
+	 * @return the first generic type class of given field type
+	 */
+	public static Class<?> getFieldTypeClassArgument(final Field field) {
+		return getTypeClass(getFieldTypeArgument(field));
 	}
 
 	/**
@@ -294,26 +335,39 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return the first generic type of given field type
 	 */
-	public static Type getFieldType(final Class<?> contextConcreteClass,
-			final Field field) {
+	public static Type getFieldType(final Class<?> contextConcreteClass, final Field field) {
 		if (field.getGenericType() instanceof TypeVariable) {
-			final TypeVariable<?> typeVariable = (TypeVariable<?>) field
-					.getGenericType();
-			final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(
-					contextConcreteClass, field.getDeclaringClass());
-			final Entry<Type, Type> genericResolvedType = resolvedTypes.resolvedTypes
-					.entrySet().stream()
-					.filter(entry -> typeVariable.getName()
-							.equals(entry.getKey().getTypeName()))
-					.findFirst().orElse(null);
+			final TypeVariable<?> typeVariable = (TypeVariable<?>) field.getGenericType();
+			final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(contextConcreteClass,
+					field.getDeclaringClass());
+			final Entry<Type, Type> genericResolvedType = resolvedTypes.resolvedTypes.entrySet().stream()
+					.filter(entry -> typeVariable.getName().equals(entry.getKey().getTypeName())).findFirst()
+					.orElse(null);
 			// getTypeArgumentsFromGenerics(typeVariable.get, field);
-			return genericResolvedType == null
-					|| genericResolvedType.getValue() instanceof TypeVariable
-							? resolvedTypes.bounds.get(typeVariable.getName())
-							: genericResolvedType.getValue();
+			return genericResolvedType == null || genericResolvedType.getValue() instanceof TypeVariable
+					? resolvedTypes.bounds.get(typeVariable.getName())
+					: genericResolvedType.getValue();
 		} else {
 			return field.getGenericType();
 		}
+	}
+
+	/**
+	 * Get first generic type argument for given field type. The field must have
+	 * a parameterized type with only 1 parameter, this parameter can't be
+	 * generics from class.<br>
+	 * This is method equivalent to call {@link #getTypeClass(Type)} on
+	 * {@link #getFieldType(Class, Field)}
+	 *
+	 * @param contextConcreteClass
+	 *            the actual concrete class holding the field. This is useful to
+	 *            retrieve generic types for super class field.
+	 * @param field
+	 *            the {@link Field}
+	 * @return the first generic type class of given field type
+	 */
+	public static Class<?> getFieldTypeClass(final Class<?> contextConcreteClass, final Field field) {
+		return getTypeClass(getFieldType(contextConcreteClass, field));
 	}
 
 	/**
@@ -337,15 +391,13 @@ public class GenericsUtils {
 	 * @throws InvocationTargetException
 	 *             if an error happened during method call
 	 */
-	public static Object callMethod(final Object object,
-			final String methodName, final Object... args)
-			throws NoSuchMethodException, IllegalArgumentException,
-			IllegalAccessException, InvocationTargetException {
+	public static Object callMethod(final Object object, final String methodName, final Object... args)
+			throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		final Class<?>[] paramTypes = new Class<?>[args.length];
 		for (int i = 0; i < args.length; i++) {
 			if (args[i] == null) {
 				throw new NullPointerException(
-						"No arguments may be null when using "+"callMethod(Object, String, Object...) because every argument is needed in order to determine the parameter types. Use callMethod(Object, String, Class<?>[], Object...) instead and specify parameter types.");
+						"No arguments may be null when using callMethod(Object, String, Object...) because every argument is needed in order to determine the parameter types. Use callMethod(Object, String, Class<?>[], Object...) instead and specify parameter types.");
 			}
 			paramTypes[i] = args[i].getClass();
 		}
@@ -375,41 +427,31 @@ public class GenericsUtils {
 	 * @throws InvocationTargetException
 	 *             if an error happened during method call
 	 */
-	public static Object callMethod(final Object object,
-			final String methodName, final Class<?>[] argsTypes,
+	public static Object callMethod(final Object object, final String methodName, final Class<?>[] argsTypes,
 			final Object... args)
-			throws NoSuchMethodException, IllegalArgumentException,
-			IllegalAccessException, InvocationTargetException {
-		final Method method = getMethod(object.getClass(), methodName,
-				argsTypes);
+			throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		final Method method = getMethod(object.getClass(), methodName, argsTypes);
 		if (method == null) {
-			throw new NoSuchMethodException("Method: " + methodName
-					+ " not found on Class: " + object.getClass());
+			throw new NoSuchMethodException("Method: " + methodName + " not found on Class: " + object.getClass());
 		}
 
 		if (method.isVarArgs()) {
 			// put variable arguments into array as last parameter
-			final Object[] allargs = new Object[method
-					.getParameterTypes().length];
+			final Object[] allargs = new Object[method.getParameterTypes().length];
 			for (int i = 0; i < method.getParameterTypes().length - 1; i++) {
 				allargs[i] = args[i];
 			}
 
 			Object[] vargs;
-			if (args.length == method.getParameterTypes().length
-					&& args[args.length - 1].getClass().isArray()
+			if (args.length == method.getParameterTypes().length && args[args.length - 1].getClass().isArray()
 					&& args[args.length - 1].getClass()
-							.equals(method.getParameterTypes()[method
-									.getParameterTypes().length - 1])) {
+							.equals(method.getParameterTypes()[method.getParameterTypes().length - 1])) {
 				vargs = (Object[]) args[args.length - 1];
 			} else {
 				vargs = (Object[]) Array.newInstance(
-						method.getParameterTypes()[method
-								.getParameterTypes().length - 1]
-										.getComponentType(),
+						method.getParameterTypes()[method.getParameterTypes().length - 1].getComponentType(),
 						args.length - method.getParameterTypes().length + 1);
-				for (int i = 0; i < args.length
-						- method.getParameterTypes().length + 1; i++) {
+				for (int i = 0; i < args.length - method.getParameterTypes().length + 1; i++) {
 					vargs[i] = args[method.getParameterTypes().length - 1 + i];
 				}
 			}
@@ -432,8 +474,7 @@ public class GenericsUtils {
 	 *            types for method arguments
 	 * @return a {@link Method}
 	 */
-	public static Method getMethod(final Class<?> clazz,
-			final String methodName, final Class<?>... argsTypes) {
+	public static Method getMethod(final Class<?> clazz, final String methodName, final Class<?>... argsTypes) {
 		final List<Method> candidates = new ArrayList<>();
 
 		Class<?> searchType = clazz;
@@ -443,46 +484,35 @@ public class GenericsUtils {
 					: getDeclaredMethods(searchType);
 			outer : for (final Method method : methods) {
 				if (method.getName().equals(methodName)) {
-					final Class<?>[] methodParamTypes = method
-							.getParameterTypes();
-					if (argsTypes.length == methodParamTypes.length || method
-							.isVarArgs()
-							&& argsTypes.length >= methodParamTypes.length
-									- 1) {
+					final Class<?>[] methodParamTypes = method.getParameterTypes();
+					if (argsTypes.length == methodParamTypes.length
+							|| method.isVarArgs() && argsTypes.length >= methodParamTypes.length - 1) {
 						// method has correct name and # of parameters
 						if (method.isVarArgs()) {
-							for (int i = 0; i < methodParamTypes.length
-									- 1; i++) {
-								if (argsTypes[i] != null && !methodParamTypes[i]
-										.isAssignableFrom(argsTypes[i])) {
+							for (int i = 0; i < methodParamTypes.length - 1; i++) {
+								if (argsTypes[i] != null && !methodParamTypes[i].isAssignableFrom(argsTypes[i])) {
 									continue outer;
 								}
 							}
-							if (methodParamTypes.length == argsTypes.length
-									+ 1) {
+							if (methodParamTypes.length == argsTypes.length + 1) {
 								// no param is specified for the optional vararg
 								// spot
 							} else if (methodParamTypes.length == argsTypes.length
 									&& methodParamTypes[argsTypes.length - 1]
-											.isAssignableFrom(
-													argsTypes[argsTypes.length
-															- 1])) {
+											.isAssignableFrom(argsTypes[argsTypes.length - 1])) {
 								// an array is specified for the last param
 							} else {
-								final Class<?> varClass = methodParamTypes[methodParamTypes.length
-										- 1].getComponentType();
-								for (int i = methodParamTypes.length
-										- 1; i < argsTypes.length; i++) {
-									if (argsTypes[i] != null && !varClass
-											.isAssignableFrom(argsTypes[i])) {
+								final Class<?> varClass = methodParamTypes[methodParamTypes.length - 1]
+										.getComponentType();
+								for (int i = methodParamTypes.length - 1; i < argsTypes.length; i++) {
+									if (argsTypes[i] != null && !varClass.isAssignableFrom(argsTypes[i])) {
 										continue outer;
 									}
 								}
 							}
 						} else {
 							for (int i = 0; i < methodParamTypes.length; i++) {
-								if (argsTypes[i] != null && !methodParamTypes[i]
-										.isAssignableFrom(argsTypes[i])) {
+								if (argsTypes[i] != null && !methodParamTypes[i].isAssignableFrom(argsTypes[i])) {
 									continue outer;
 								}
 							}
@@ -495,9 +525,7 @@ public class GenericsUtils {
 			// Do not search in super classes if there is a candidate in sub
 			// class.
 			// This may be a problem but increases performances
-			searchType = candidates.isEmpty()
-					? null
-					: searchType.getSuperclass();
+			searchType = candidates.isEmpty() ? null : searchType.getSuperclass();
 		}
 
 		if (candidates.size() == 0) {
@@ -517,10 +545,8 @@ public class GenericsUtils {
 				if (m.isVarArgs()) {
 					// the exception is if an array is actually specified as the
 					// last parameter
-					if (m.getParameterTypes().length != argsTypes.length
-							|| !m.getParameterTypes()[argsTypes.length - 1]
-									.isAssignableFrom(
-											argsTypes[argsTypes.length - 1])) {
+					if (m.getParameterTypes().length != argsTypes.length || !m.getParameterTypes()[argsTypes.length - 1]
+							.isAssignableFrom(argsTypes[argsTypes.length - 1])) {
 						itr.remove();
 					}
 				}
@@ -566,8 +592,7 @@ public class GenericsUtils {
 							if (!aTypes[i].equals(bTypes[i])) {
 								if (aTypes[i].isAssignableFrom(bTypes[i])) {
 									bScore++;
-								} else if (bTypes[i]
-										.isAssignableFrom(aTypes[i])) {
+								} else if (bTypes[i].isAssignableFrom(aTypes[i])) {
 									aScore++;
 								}
 							}
@@ -593,10 +618,8 @@ public class GenericsUtils {
 				// score
 				for (int j = 1; j < candidates.size(); j++) {
 					final Method d = candidates.get(j);
-					if (!c.getDeclaringClass().equals(d.getDeclaringClass())
-							&& (d.getDeclaringClass().equals(clazz)
-									|| c.getDeclaringClass().isAssignableFrom(
-											d.getDeclaringClass()))) {
+					if (!c.getDeclaringClass().equals(d.getDeclaringClass()) && (d.getDeclaringClass().equals(clazz)
+							|| c.getDeclaringClass().isAssignableFrom(d.getDeclaringClass()))) {
 						c = d;
 					}
 				}
@@ -626,8 +649,7 @@ public class GenericsUtils {
 	 * @return a {@link List} of {@link Method}
 	 */
 	public static List<Method> getMethodsAnnotatedWith(final Class<?> type,
-			final Class<? extends Annotation> annotation,
-			final boolean recursive) {
+			final Class<? extends Annotation> annotation, final boolean recursive) {
 		final List<Method> methods = new ArrayList<>();
 		Class<?> clazz = type;
 		// need to iterated thought hierarchy in order to retrieve methods from
@@ -637,11 +659,9 @@ public class GenericsUtils {
 			// iterate though the list of methods declared in the class
 			// represented by klass
 			// variable, and add those annotated with the specified annotation
-			final List<Method> allMethods = Arrays
-					.asList(clazz.getDeclaredMethods());
+			final List<Method> allMethods = Arrays.asList(clazz.getDeclaredMethods());
 			for (final Method method : allMethods) {
-				final Annotation annotInstance = method
-						.getAnnotation(annotation);
+				final Annotation annotInstance = method.getAnnotation(annotation);
 				if (annotInstance != null) {
 					methods.add(method);
 				}
@@ -662,15 +682,12 @@ public class GenericsUtils {
 
 	private static Type getSuperInterface(final Type genericInterface) {
 		final Type[] genericSuperInterfaces = (genericInterface instanceof ParameterizedType
-				? getRawClass(genericInterface)
+				? getTypeClass(genericInterface)
 				: (Class<?>) genericInterface).getGenericInterfaces();
-		return genericSuperInterfaces.length == 0
-				? null
-				: genericSuperInterfaces[0];
+		return genericSuperInterfaces.length == 0 ? null : genericSuperInterfaces[0];
 	}
 
-	private static List<Type> getTypeArguments(
-			final Map<Type, Type> genericTypeMappings,
+	private static List<Type> getTypeArguments(final Map<Type, Type> genericTypeMappings,
 			final Map<String, Type> bounds, final Type[] genericTypes) {
 		final List<Type> typeArguments = new ArrayList<>();
 		// resolve types by chasing up type variables.
@@ -680,8 +697,7 @@ public class GenericsUtils {
 					baseType = genericTypeMappings.get(baseType);
 				}
 				if (baseType instanceof TypeVariable) {
-					baseType = bounds
-							.get(((TypeVariable<?>) baseType).getName());
+					baseType = bounds.get(((TypeVariable<?>) baseType).getName());
 				}
 				typeArguments.add(baseType);
 			}
@@ -690,8 +706,7 @@ public class GenericsUtils {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private static TypeAndResolvedTypes getTypeAndResolvedTypes(
-			final Class<?> childClass, final Class<?> baseClass) {
+	private static TypeAndResolvedTypes getTypeAndResolvedTypes(final Class<?> childClass, final Class<?> baseClass) {
 		final TypeAndResolvedTypes holder = new TypeAndResolvedTypes();
 		holder.type = childClass;
 
@@ -707,16 +722,12 @@ public class GenericsUtils {
 				}
 			} else {
 				final ParameterizedType parameterizedType = (ParameterizedType) holder.type;
-				final Class<?> rawType = (Class<?>) parameterizedType
-						.getRawType();
+				final Class<?> rawType = (Class<?>) parameterizedType.getRawType();
 
-				final Type[] actualTypeArguments = parameterizedType
-						.getActualTypeArguments();
-				final TypeVariable<?>[] typeParameters = rawType
-						.getTypeParameters();
+				final Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+				final TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
 				for (int i = 0; i < actualTypeArguments.length; i++) {
-					holder.resolvedTypes.put(typeParameters[i],
-							actualTypeArguments[i]);
+					holder.resolvedTypes.put(typeParameters[i], actualTypeArguments[i]);
 				}
 
 				if (!stop && !rawType.equals(baseClass)) {
@@ -726,16 +737,13 @@ public class GenericsUtils {
 			if (stop) {
 				final Class<?> rawType = holder.type instanceof Class
 						? (Class<?>) holder.type
-						: (Class<?>) ((ParameterizedType) holder.type)
-								.getRawType();
-				for (final TypeVariable typeVariable : rawType
-						.getTypeParameters()) {
-					holder.bounds.put(typeVariable.getName(),
-							typeVariable.getBounds()[0]);
+						: (Class<?>) ((ParameterizedType) holder.type).getRawType();
+				for (final TypeVariable typeVariable : rawType.getTypeParameters()) {
+					holder.bounds.put(typeVariable.getName(), typeVariable.getBounds()[0]);
 				}
 				break loop;
 			}
-			if (baseClass.equals(getRawClass(holder.type))) {
+			if (baseClass.equals(getTypeClass(holder.type))) {
 				stop = true;
 			}
 		}
@@ -763,8 +771,7 @@ public class GenericsUtils {
 		if (type instanceof Class) {
 			actualTypeArguments = ((Class) type).getTypeParameters();
 		} else if (type != null) {
-			actualTypeArguments = ((ParameterizedType) type)
-					.getActualTypeArguments();
+			actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
 		}
 		return actualTypeArguments;
 	}

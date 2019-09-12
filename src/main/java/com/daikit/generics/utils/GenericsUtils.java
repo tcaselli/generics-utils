@@ -38,41 +38,46 @@ public class GenericsUtils {
 	// *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 
 	/**
-	 * Get type arguments of a generic base type "baseType" in the context of
-	 * extending/implementing class or interface "actualType"
+	 * Get type arguments of a generic base type "baseType" (which is in general
+	 * a class/interface) in the context of "actualType" (which is in general a
+	 * class/interface extending/implementing "baseType").
 	 *
 	 * @param actualType
-	 *            the extending/implementing class or interface
+	 *            the extending/implementing type (which is in general a class
+	 *            or interface)
 	 * @param baseType
-	 *            the interface or super class where are defined the generic
-	 *            types from which we are looking for actual types
+	 *            the type (which is in general an interface or super class)
+	 *            where are defined the generic types from which we are looking
+	 *            for actual types
 	 * @return a generic type list of interface
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static List<Type> getTypeArguments(final Class<?> actualType, final Class<?> baseType) {
-		return baseType.isInterface()
+	public static List<Type> getTypeArguments(final Type actualType, final Type baseType) {
+		return baseType instanceof Class && ((Class<?>) baseType).isInterface()
 				? getTypeArgumentsFromInterface(actualType, baseType)
-				: getTypeArgumentsFromSuperclass((Class) actualType, baseType);
+				: getTypeArgumentsFromSupertype(actualType, baseType);
 	}
 
 	/**
-	 * Get type arguments of a generic base type "baseType" in the context of
-	 * extending/implementing class or interface "actualType".<br>
-	 * This is method equivalent to call {@link #getTypeClasses(List)} on
-	 * {@link #getTypeArguments(Class, Class)}.
+	 * Get type arguments of a generic base type "baseType" (which is in general
+	 * a class/interface) in the context of "actualType" (which is in general a
+	 * class/interface extending/implementing "baseType").<br>
+	 * Calling this method is equivalent to call {@link #getTypeClasses(List)}
+	 * on {@link #getTypeArguments(Type, Type)}.
 	 *
 	 * @param actualType
-	 *            the extending/implementing class or interface
+	 *            the extending/implementing type (which is in general a class
+	 *            or interface)
 	 * @param baseType
-	 *            the interface or super class where are defined the generic
-	 *            types from which we are looking for actual types
+	 *            the type (which is in general an interface or super class)
+	 *            where are defined the generic types from which we are looking
+	 *            for actual types
 	 * @return a generic type class list of interface
 	 */
-	public static List<Class<?>> getTypeClassArguments(final Class<?> actualType, final Class<?> baseType) {
+	public static List<Class<?>> getTypeArgumentsAsClasses(final Type actualType, final Type baseType) {
 		return getTypeClasses(getTypeArguments(actualType, baseType));
 	}
 
-	private static List<Type> getTypeArgumentsFromInterface(final Class<?> actualType, final Class<?> baseType) {
+	private static List<Type> getTypeArgumentsFromInterface(final Type actualType, final Type baseType) {
 		final Map<Type, Type> resolvedTypes = new HashMap<>();
 		Type type = actualType;
 		while (!getTypeClass(type).equals(Object.class)) {
@@ -143,42 +148,37 @@ public class GenericsUtils {
 		return null;
 	}
 
-	private static <T> List<Type> getTypeArgumentsFromSuperclass(final Class<? extends T> actualType,
-			final Class<T> baseType) {
+	private static List<Type> getTypeArgumentsFromSupertype(final Type actualType, final Type baseType) {
 		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(actualType, baseType);
 		// for each actual type argument provided to baseClass, determine (if
 		// possible)
 		// the type class for that type argument.
 		final Type[] genericTypes = getActualTypeArguments(resolvedTypes.type);
-		return getTypeArguments(resolvedTypes.resolvedTypes, resolvedTypes.bounds, genericTypes);
+		return getGenericTypes(resolvedTypes.resolvedTypes, resolvedTypes.bounds, genericTypes);
 	}
 
 	/**
-	 * Get direct generic types for given class
+	 * Get direct generic types for given type.
 	 *
-	 * @param clazz
-	 *            the clazz
-	 * @param <T>
-	 *            The input class actual type
+	 * @param type
+	 *            the type to get generics from
 	 * @return a list of the types for the actual type arguments.
 	 */
-	public static <T> List<Type> getTypeArguments(final Class<T> clazz) {
-		return getTypeArguments(clazz, clazz);
+	public static List<Type> getTypeArguments(final Type type) {
+		return getTypeArguments(type, type);
 	}
 
 	/**
-	 * Get direct generic types for given class.<br>
-	 * This is method equivalent to call {@link #getTypeClasses(List)} on
-	 * {@link #getTypeClassArguments(Class)}.
+	 * Get direct generic types for given type.<br>
+	 * Calling this method is equivalent to call {@link #getTypeClasses(List)}
+	 * on {@link #getTypeArgumentsAsClasses(Type)}.
 	 *
-	 * @param clazz
-	 *            the clazz
-	 * @param <T>
-	 *            The input class actual type
+	 * @param type
+	 *            the type to get generics from
 	 * @return a list of the type classes for the actual type arguments.
 	 */
-	public static <T> List<Class<?>> getTypeClassArguments(final Class<T> clazz) {
-		return getTypeClasses(getTypeArguments(clazz));
+	public static List<Class<?>> getTypeArgumentsAsClasses(final Type type) {
+		return getTypeClasses(getTypeArguments(type));
 	}
 
 	/**
@@ -221,8 +221,8 @@ public class GenericsUtils {
 	}
 
 	/**
-	 * Get generic type arguments for the given field type. The field must have
-	 * a parameterized type, these parameters can be generics from class.
+	 * Get generic types for the given field type. The field must have a
+	 * parameterized type, these parameters can be generics from class.
 	 *
 	 * @param contextConcreteClass
 	 *            the actual concrete class holding the field. This is useful to
@@ -235,15 +235,15 @@ public class GenericsUtils {
 		final TypeAndResolvedTypes resolvedTypes = getTypeAndResolvedTypes(contextConcreteClass,
 				field.getDeclaringClass());
 		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
-		return getTypeArguments(resolvedTypes.resolvedTypes, resolvedTypes.bounds,
+		return getGenericTypes(resolvedTypes.resolvedTypes, resolvedTypes.bounds,
 				parameterizedType.getActualTypeArguments());
 	}
 
 	/**
-	 * Get generic type arguments for the given field type. The field must have
-	 * a parameterized type, these parameters can be generics from class.<br>
-	 * This is method equivalent to call {@link #getTypeClasses(List)} on
-	 * {@link #getFieldTypeArguments(Class, Field)}.
+	 * Get generic types for the given field type. The field must have a
+	 * parameterized type, these parameters can be generics from class.<br>
+	 * Calling this method is equivalent to call {@link #getTypeClasses(List)}
+	 * on {@link #getFieldTypeArguments(Class, Field)}.
 	 *
 	 * @param contextConcreteClass
 	 *            the actual concrete class holding the field. This is useful to
@@ -252,45 +252,15 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return a {@link List} of the generic type classes of given field type
 	 */
-	public static List<Class<?>> getFieldTypeClassArguments(final Class<?> contextConcreteClass, final Field field) {
+	public static List<Class<?>> getFieldTypeArgumentsAsClasses(final Class<?> contextConcreteClass,
+			final Field field) {
 		return getTypeClasses(getFieldTypeArguments(contextConcreteClass, field));
 	}
 
 	/**
-	 * Get generic type arguments for the given field type. The field must have
-	 * a parameterized type, these parameters must not be generic.
-	 *
-	 * @param field
-	 *            the {@link Field}
-	 * @return a {@link List} of the generic types of given field type
-	 */
-	public static List<Type> getFieldTypeArguments(final Field field) {
-		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
-		final List<Type> clazzList = new ArrayList<>();
-		for (final Type type : parameterizedType.getActualTypeArguments()) {
-			clazzList.add(type);
-		}
-		return clazzList;
-	}
-
-	/**
-	 * Get generic type arguments for the given field type. The field must have
-	 * a parameterized type, these parameters must not be generic.<br>
-	 * This is method equivalent to call {@link #getTypeClasses(List)} on
-	 * {@link #getFieldTypeArguments(Class, Field)}.
-	 *
-	 * @param field
-	 *            the {@link Field}
-	 * @return a {@link List} of the generic type classes of given field type
-	 */
-	public static List<Class<?>> getFieldTypeClassArguments(final Field field) {
-		return getTypeClasses(getFieldTypeArguments(field));
-	}
-
-	/**
-	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter can be
-	 * generics from class.
+	 * Get first generic type for given field type. The field must have a
+	 * parameterized type with only 1 parameter, this parameter can be generics
+	 * from class.
 	 *
 	 * @param contextConcreteClass
 	 *            the actual concrete class holding the field. This is useful to
@@ -307,11 +277,11 @@ public class GenericsUtils {
 	}
 
 	/**
-	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter can be
-	 * generics from class.<br>
-	 * This is method equivalent to call {@link #getTypeClass(Type)} on
-	 * {@link #getFieldTypeArgument(Class, Field)}
+	 * Get first generic type for given field type. The field must have a
+	 * parameterized type with only 1 parameter, this parameter can be generics
+	 * from class.<br>
+	 * Calling this method is equivalent to call {@link #getTypeClass(Type)} on
+	 * {@link #getFieldTypeArgument(Class, Field)}.
 	 *
 	 * @param contextConcreteClass
 	 *            the actual concrete class holding the field. This is useful to
@@ -320,45 +290,13 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return the first generic type class of given field type
 	 */
-	public static Class<?> getFieldTypeClassArgument(final Class<?> contextConcreteClass, final Field field) {
+	public static Class<?> getFieldTypeArgumentAsClass(final Class<?> contextConcreteClass, final Field field) {
 		return getTypeClass(getFieldTypeArgument(contextConcreteClass, field));
 	}
 
 	/**
 	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter cant be
-	 * generics from class.
-	 *
-	 * @param field
-	 *            the {@link Field}
-	 * @return the first generic type of given field type
-	 */
-	public static Type getFieldTypeArgument(final Field field) {
-		final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
-		return parameterizedType.getActualTypeArguments().length == 0
-				? null
-				: parameterizedType.getActualTypeArguments()[0];
-	}
-
-	/**
-	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter cant be
-	 * generics from class.<br>
-	 * This is method equivalent to call {@link #getTypeClass(Type)} on
-	 * {@link #getFieldTypeArgument(Field)}
-	 *
-	 * @param field
-	 *            the {@link Field}
-	 * @return the first generic type class of given field type
-	 */
-	public static Class<?> getFieldTypeClassArgument(final Field field) {
-		return getTypeClass(getFieldTypeArgument(field));
-	}
-
-	/**
-	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter cant be
-	 * generics from class.
+	 * a parameterized type with only 1 parameter.
 	 *
 	 * @param contextConcreteClass
 	 *            the actual concrete class holding the field. This is useful to
@@ -386,8 +324,7 @@ public class GenericsUtils {
 
 	/**
 	 * Get first generic type argument for given field type. The field must have
-	 * a parameterized type with only 1 parameter, this parameter can't be
-	 * generics from class.<br>
+	 * a parameterized type with only 1 parameter.<br>
 	 * This is method equivalent to call {@link #getTypeClass(Type)} on
 	 * {@link #getFieldType(Class, Field)}
 	 *
@@ -398,7 +335,7 @@ public class GenericsUtils {
 	 *            the {@link Field}
 	 * @return the first generic type class of given field type
 	 */
-	public static Class<?> getFieldTypeClass(final Class<?> contextConcreteClass, final Field field) {
+	public static Class<?> getFieldTypeAsClass(final Class<?> contextConcreteClass, final Field field) {
 		return getTypeClass(getFieldType(contextConcreteClass, field));
 	}
 
@@ -669,7 +606,7 @@ public class GenericsUtils {
 	}
 
 	/**
-	 * Get methods annotated with given annotation within given type class
+	 * Get methods annotated with given annotation within given type class.
 	 *
 	 * @param type
 	 *            the class on which annotated methods have to be retrieved
@@ -719,8 +656,8 @@ public class GenericsUtils {
 		return genericSuperInterfaces.length == 0 ? null : genericSuperInterfaces[0];
 	}
 
-	private static List<Type> getTypeArguments(final Map<Type, Type> genericTypeMappings,
-			final Map<String, Type> bounds, final Type[] genericTypes) {
+	private static List<Type> getGenericTypes(final Map<Type, Type> genericTypeMappings, final Map<String, Type> bounds,
+			final Type[] genericTypes) {
 		final List<Type> typeArguments = new ArrayList<>();
 		// resolve types by chasing up type variables.
 		if (genericTypes != null) {
@@ -738,11 +675,11 @@ public class GenericsUtils {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private static TypeAndResolvedTypes getTypeAndResolvedTypes(final Class<?> childClass, final Class<?> baseClass) {
+	private static TypeAndResolvedTypes getTypeAndResolvedTypes(final Type childType, final Type baseType) {
 		final TypeAndResolvedTypes holder = new TypeAndResolvedTypes();
-		holder.type = childClass;
+		holder.type = childType;
 
-		boolean stop = baseClass.equals(childClass);
+		boolean stop = baseType.equals(childType);
 		// start walking up the inheritance hierarchy until we hit baseClass
 		loop : while (holder.type != null) {
 			if (holder.type instanceof Class) {
@@ -761,7 +698,7 @@ public class GenericsUtils {
 					holder.resolvedTypes.put(typeParameters[i], actualTypeArguments[i]);
 				}
 
-				if (!stop && !typeClass.equals(baseClass)) {
+				if (!stop && !typeClass.equals(baseType)) {
 					holder.type = typeClass.getGenericSuperclass();
 				}
 			}
@@ -774,7 +711,7 @@ public class GenericsUtils {
 				}
 				break loop;
 			}
-			if (baseClass.equals(getTypeClass(holder.type))) {
+			if (baseType.equals(getTypeClass(holder.type))) {
 				stop = true;
 			}
 		}

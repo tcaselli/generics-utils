@@ -6,7 +6,7 @@
 
 Generics utils consists in a unique utility class for dealing with java generics. Here are its capabilities :
 
-### Get actual Types a class has used to implement a given interface
+### Get actual generic types a class has used to implement a given interface
 
 Example, super simple but it works with any hierarchy of classes provided that ClassA1 implements InterfaceA1 somehow :
 ```java
@@ -19,7 +19,7 @@ GenericsUtils.getTypeArguments(ClassA1.class, InterfaceA1.class)
 // Will return List[Type1.class, Type2.class]
 ```
 
-### Get actual Types a class has used to extend a given super class
+### Get actual generic types a class has used to extend a given super class
 
 Example, super simple but it works with any hierarchy of classes provided that ClassA1 extends ClassA2 somehow :
 ```java
@@ -32,7 +32,22 @@ GenericsUtils.getTypeArguments(ClassA1.class, ClassA2.class)
 // Will return List[Type1.class, Type2.class]
 ```
 
-### Get actual generic Types for a class generic field
+### Get actual type for a class field typed with declaring class generic
+
+Example :
+
+```java
+public class Type1 {}
+public class ClassA1<GENERIC1> { private GENERIC1 test; }
+public class ClassA2 extends ClassA1<Type1> {}
+
+GenericsUtils.getFieldType(ClassA1.class, ClassA1.class.getDeclaredField("test")) 
+// Will return Object.class
+GenericsUtils.getFieldType(ClassA2.class, ClassA1.class.getDeclaredField("test")) 
+// Will return Type1.class
+```
+
+### Get actual generic types for a class generic field
 
 Example :
 
@@ -69,7 +84,7 @@ GenericsUtils.callMethod(object, "test", "param", new String[] { "vararg1", "var
 // Will call the test method with arguments ("param", "vararg1", "vararg2")
 ```
 
-### Get type(s) underlying class(es)
+### Get type(s) extending class(es)
 
 Example :
 

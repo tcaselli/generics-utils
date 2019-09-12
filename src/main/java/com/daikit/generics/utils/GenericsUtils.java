@@ -182,7 +182,7 @@ public class GenericsUtils {
 	}
 
 	/**
-	 * Get the underlying class for a type, or null if the type is a variable
+	 * Get the extending classes for a type, or null if the type is a variable
 	 * type.
 	 *
 	 * @param type
@@ -209,7 +209,7 @@ public class GenericsUtils {
 	}
 
 	/**
-	 * Get the underlying classes for a list of types, (if type is a variable
+	 * Get the extending classes for a list of types, (if type is a variable
 	 * type then its class will be null).
 	 *
 	 * @param types
@@ -748,9 +748,7 @@ public class GenericsUtils {
 			if (holder.type instanceof Class) {
 				if (!stop) {
 					// there is no useful information for us in types classes,
-					// so
-					// just
-					// keep going.
+					// so just keep going.
 					holder.type = ((Class) holder.type).getGenericSuperclass();
 				}
 			} else {

@@ -89,10 +89,15 @@ GenericsUtils.callMethod(object, "test", "param", new String[] { "vararg1", "var
 Example :
 
 ```java
+public class Type1 {}
+public class Type2 {}
 public class Class1<GENERIC> {}
 public class Class2 extends Class1<Type1> {}
+public class Class3 extends Class1<Type1, Type2> {}
 GenericsUtils.getTypeClass(Class2.class.getGenericSuperclass())
-// Will return Class1
+// Will return Type1
+GenericsUtils.getTypeClasses(Class3.class.getGenericSuperclass())
+// Will return List<Type1, Type2>
 ```
 
 ## Where can I get the latest release?
